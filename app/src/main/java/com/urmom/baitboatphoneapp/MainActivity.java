@@ -23,25 +23,33 @@ import android.widget.TextView;
 
 import com.zerokol.views.joystickView.JoystickView;
 
-import java.io.IOException;
-import java.text.DateFormat;
-import java.util.Arrays;
-import java.util.Date;
-
 public class MainActivity extends AppCompatActivity {
     private final static int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
 
-    private Button mTestButton = null;
-    private JoystickView joystickView = null;
+    private Button mDropButton = null;
+    private Button mSetHomeButton = null;
+    private Button mGoHomeButton = null;
 
-    private  protocolParser mParser = null;
+    private JoystickView joystickView = null;
+    private TextView mGpsText = null;
+    private TextView mOrientationText = null;
+    private TextView mVbatText = null;
+    private TextView mTempPressText = null;
+
+    private BoatProtocolParser mParser = null;
     private UartService mService = null;
     Handler mHandler;
 
     private int mJoyPower = 0;
     private int mJoyAngle = 0;
 
+    private  boolean mDropRequested = false;
+    private  boolean mGoHomeRequested = false;
+    private  boolean mSetHomeRequested = false;
+
+    private double lastTempVal = 0;
+    private double lastPressVal = 0;
 
     private final static String TAG = "BaitBoatPhoneApp";
 
@@ -69,14 +77,46 @@ public class MainActivity extends AppCompatActivity {
             builder.show();
 
         }
-        mTestButton = findViewById(R.id.button);
+        mDropButton = findViewById(R.id.dropButton);
+        mSetHomeButton = findViewById(R.id.setHomeButton);
+        mGoHomeButton = findViewById(R.id.goHomeButton);
+
         joystickView = findViewById(R.id.joystickView);
 
+        mGpsText = findViewById(R.id.gpsData);
+        mOrientationText = findViewById(R.id.orientationText);
+        mVbatText = findViewById(R.id.vbatText);
+        mTempPressText = findViewById(R.id.tempPressText);
 
-        mTestButton.setOnClickListener(new View.OnClickListener() {
+
+
+        mGpsText.setVisibility(View.INVISIBLE);
+        mOrientationText.setVisibility(View.INVISIBLE);
+        mVbatText.setVisibility(View.INVISIBLE);
+        mTempPressText.setVisibility(View.INVISIBLE);
+
+        mDropButton.setVisibility(View.INVISIBLE);
+        mSetHomeButton.setVisibility(View.INVISIBLE);
+        mGoHomeButton.setVisibility(View.INVISIBLE);
+
+
+        mDropButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                Log.d(TAG, "Button pressed");
-                StartConnecting();
+                sendLoadDrop();
+            }
+        });
+
+        mSetHomeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendSetHome();
+            }
+        });
+
+        mGoHomeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendGoHome();
             }
         });
 
@@ -87,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }, JoystickView.DEFAULT_LOOP_INTERVAL);
 
-        mParser = new protocolParser();
+        mParser = new BoatProtocolParser();
         service_init();
 
         mHandler.postDelayed(new Runnable() {
@@ -128,16 +168,11 @@ public class MainActivity extends AppCompatActivity {
             if (action.equals(UartService.ACTION_GATT_DISCONNECTED)) {
                 runOnUiThread(new Runnable() {
                     public void run() {
-//                        String currentDateTimeString = DateFormat.getTimeInstance().format(new Date());
-//                        Log.d(TAG, "UART_DISCONNECT_MSG");
-//                        btnConnectDisconnect.setText("Connect");
-//                        uartConnected = false;
-//                        ((TextView) findViewById(R.id.deviceName)).setText("Not Connected");
-//                        listAdapter.add("["+currentDateTimeString+"] Disconnected to: "+ mDevice.getName());
-//                        mState = UART_PROFILE_DISCONNECTED;
-                        mService.close();
-                        //setUiState();
-
+                        StartConnecting();
+                        joystickView.setVisibility(View.INVISIBLE);
+                        mDropButton.setVisibility(View.INVISIBLE);
+                        mSetHomeButton.setVisibility(View.INVISIBLE);
+                        mGoHomeButton.setVisibility(View.INVISIBLE);
                     }
                 });
             }
@@ -145,7 +180,11 @@ public class MainActivity extends AppCompatActivity {
 
             //*********************//
             if (action.equals(UartService.ACTION_GATT_SERVICES_DISCOVERED)) {
-                mService.enableTXNotification();
+                joystickView.setVisibility(View.VISIBLE);
+                mDropButton.setVisibility(View.VISIBLE);
+                mSetHomeButton.setVisibility(View.VISIBLE);
+                mGoHomeButton.setVisibility(View.VISIBLE);
+
             }
             //*********************//
             if (action.equals(UartService.ACTION_DATA_AVAILABLE)) {
@@ -177,6 +216,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "Unable to initialize Bluetooth");
                 finish();
             }
+            StartConnecting();
         }
 
         public void onServiceDisconnected(ComponentName className) {
@@ -213,58 +253,89 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    void ShowWarning(String warningText)
-    {
+    void ShowWarning(String warningText) {
 
     }
 
-    void processBoatMessages()
-    {
-        protocolParser.Command cmd;
+    void processBoatMessages() {
+        BoatProtocolParser.ReceivedBoatMessage cmd;
 
         mParser.parseRxBuffer();
 
-        while (mParser.isRxCommandAvailable())
-        {
+        while (mParser.isRxCommandAvailable()) {
             cmd = mParser.getBoatMessage();
-            Log.d(TAG,"Got Boat msg! ID is " + cmd.type + " val1 is " + cmd.val1 + " val2 is " + cmd.val2);
+//            Log.d(TAG,"Got Boat msg! ID is " + cmd.type + " val1 is " + cmd.val1 + " val2 is " + cmd.val2);
+
+            switch (cmd.type) {
+                case BoatProtocolParser.TYPE_GPS: {
+                    updateGpsField(cmd.val1, cmd.val2);
+                    break;
+                }
+                case BoatProtocolParser.TYPE_COMPASS: {
+                    updateOrientationField(cmd.val1);
+                    break;
+                }
+                case BoatProtocolParser.TYPE_VOLTAGE: {
+                    updateVbatField(cmd.val1);
+                    break;
+                }
+                case BoatProtocolParser.TYPE_PRESSURE: {
+                    lastPressVal = cmd.val1;
+                    updateTempPressField(lastTempVal, lastPressVal);
+                    break;
+                }
+                case BoatProtocolParser.TYPE_TEMPERATURE: {
+                    lastTempVal = cmd.val1;
+                    updateTempPressField(lastTempVal, lastPressVal);
+                    break;
+                }
+
+            }
+
         }
 
     }
+
     void sendLoadDrop() {
-        if(mService.isTxPossible())
-        {
-            mService.writeRXCharacteristic(mParser.getLoadDropRequest());
-        }
-        else
-        {
-            ShowWarning("Nie można wysłać komendy!");
-        }
+        mDropRequested = true;
     }
 
     void sendGoHome() {
-        if(mService.isTxPossible())
-        {
-            mService.writeRXCharacteristic(mParser.getGoHomeRequest());
-        }
-        else
-        {
-            ShowWarning("Nie można wysłać komendy!");
-        }
+        mGoHomeRequested = true;
     }
 
     void sendSetHome() {
-        if(mService.isTxPossible())
-        {
-            mService.writeRXCharacteristic(mParser.getSetHomeRequest());
-        }
-        else
-        {
-            ShowWarning("Nie można wysłać komendy!");
-        }
+        mSetHomeRequested = true;
     }
 
 
+    void updateGpsField(double lat, double lon) {
+        mGpsText.setText(String.format("%.6fN, %.6fW", lat, lon));
+        if (mGpsText.getVisibility() == View.INVISIBLE) {
+            mGpsText.setVisibility(View.VISIBLE);
+        }
+    }
+
+    void updateVbatField(double vbat) {
+        mVbatText.setText(String.format("%.2fV", vbat));
+        if (mVbatText.getVisibility() == View.INVISIBLE) {
+            mVbatText.setVisibility(View.VISIBLE);
+        }
+    }
+
+    void updateOrientationField(double orientation) {
+        mOrientationText.setText(String.format("%d° (PN-WSCH)", (int) orientation));
+        if (mOrientationText.getVisibility() == View.INVISIBLE) {
+            mOrientationText.setVisibility(View.VISIBLE);
+        }
+    }
+
+    void updateTempPressField(double temp, double press) {
+        mTempPressText.setText(String.format("%.1f°C   %.1fhPa", temp, press));
+        if (mTempPressText.getVisibility() == View.INVISIBLE) {
+            mTempPressText.setVisibility(View.VISIBLE);
+        }
+    }
 
     void onJoystickUpdate(int power, int angle) {
         mJoyPower = power;
@@ -272,13 +343,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void periodicControlSend() {
-         byte[] controlVals = mParser.generateMotorValuesFromJoystick(mJoyPower, mJoyAngle);
+        byte[] msgToBoat = mParser.generateMotorValuesFromJoystick(mJoyPower, mJoyAngle);
 
-//         Log.d(TAG, "Control values: " + new String(controlVals, 0));
-         if (mService.isTxPossible()) {
-            mService.writeRXCharacteristic(controlVals);
+        if (mService.isTxPossible()) {
+            /// takes long time!
+            if(mDropRequested)
+            {
+                mDropRequested = false;
+                msgToBoat = extendArray(msgToBoat, mParser.getLoadDropRequest());
+            }
+
+            if(mGoHomeRequested)
+            {
+                mGoHomeRequested = false;
+                msgToBoat = extendArray(msgToBoat, mParser.getGoHomeRequest());
+            }
+
+            if(mSetHomeRequested)
+            {
+                mSetHomeRequested = false;
+                msgToBoat = extendArray(msgToBoat, mParser.getSetHomeRequest());
+            }
+            Log.d(TAG, "Sending " + new String(msgToBoat, 0));
+            boolean result =mService.writeRXCharacteristic(msgToBoat);
         }
+
+
     }
 
+    byte[] extendArray(byte[] arr1, byte[] arr2)
+    {
+        byte[] result = new byte[arr1.length + arr2.length];
+        for(int i = 0 ; i < arr1.length; i++)
+        {
+            result[i] = arr1[i];
+        }
+        for(int i = 0 ; i < arr2.length; i++)
+        {
+            result[i+ arr1.length] = arr2[i];
+        }
+    return result;
 
+
+
+    }
 }

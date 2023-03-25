@@ -1,11 +1,9 @@
 package com.urmom.baitboatphoneapp;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class protocolParser {
+public class BoatProtocolParser {
     private final static String TAG = "BaitBoatPhoneApp";
 
     static final int TYPE_GPS = 0;
@@ -23,7 +21,7 @@ public class protocolParser {
     private int maxAllowedMotorVal = 100;
     ArrayList<Byte> rxBuffer = new ArrayList<Byte>();
 
-    ConcurrentLinkedQueue<Command> rxParsedCommands = new ConcurrentLinkedQueue<Command>();
+    ConcurrentLinkedQueue<ReceivedBoatMessage> rxParsedCommands = new ConcurrentLinkedQueue<>();
 
     private class RxParseRule {
         int type;
@@ -35,13 +33,13 @@ public class protocolParser {
         }
     }
 
-    public class Command {
+    public class ReceivedBoatMessage {
 
         int type;
         double val1;
         double val2;
 
-        public Command() {
+        public ReceivedBoatMessage() {
             type = TYPE_INVALID;
             val1 = 0;
             val2 = 0;
@@ -114,11 +112,11 @@ public class protocolParser {
     }
 
     byte[] getSetHomeRequest() {
-        return "SX_".getBytes();
+        return "SY_".getBytes();
     }
 
     byte[] getGoHomeRequest() {
-        return "XX_".getBytes();
+        return "YY_".getBytes();
     }
 
 // "MXX_" - sends compass orientation in hex. value 0 is 0 degrees and 240 is 360 degrees. 241-255 invalid
@@ -207,41 +205,41 @@ public class protocolParser {
 
 
     void parseCommand(int commandType) {
-        Command cmd = new Command();
-        cmd.type = commandType;
+        ReceivedBoatMessage msg = new ReceivedBoatMessage();
+        msg.type = commandType;
 
         switch (commandType) {
             case TYPE_COMPASS:
-                cmd.val1 = parseHexInt(1, 2);
-                cmd.val1 *= 360.0 / 240.0;
+                msg.val1 = parseHexInt(1, 2);
+                msg.val1 *= 360.0 / 240.0;
                 break;
             case TYPE_GPS:
-                cmd.val1 = parseHexInt(1, 8);
-                cmd.val2 = parseHexInt(10, 8);
+                msg.val1 = parseHexInt(1, 8);
+                msg.val2 = parseHexInt(10, 8);
 
-                cmd.val1 /= 1000000.0;
-                cmd.val2 /= 1000000.0;
+                msg.val1 /= 1000000.0;
+                msg.val2 /= 1000000.0;
                 break;
             case TYPE_VOLTAGE:
-                cmd.val1 = parseHexInt(1, 4);
-                cmd.val1 /= 100.0;
+                msg.val1 = parseHexInt(1, 4);
+                msg.val1 /= 100.0;
                 break;
 
             case TYPE_PRESSURE:
-                cmd.val1 = parseHexInt(1, 4);
-                cmd.val1 /= 10.0;
-                cmd.val1 += 900.0;
+                msg.val1 = parseHexInt(1, 4);
+                msg.val1 /= 10.0;
+                msg.val1 += 900.0;
                 break;
             case TYPE_TEMPERATURE:
-                cmd.val1 = parseHexInt(1, 4);
-                cmd.val1 /= 10.0;
-                cmd.val1 += -40.0;
+                msg.val1 = parseHexInt(1, 4);
+                msg.val1 /= 10.0;
+                msg.val1 += -40.0;
                 break;
             default:
                 break;
         }
 
-        rxParsedCommands.add(cmd);
+        rxParsedCommands.add(msg);
     }
 
 
@@ -249,7 +247,7 @@ public class protocolParser {
         return rxParsedCommands.size() > 0;
     }
 
-    public Command getBoatMessage() {
+    public ReceivedBoatMessage getBoatMessage() {
         return rxParsedCommands.poll();
     }
 

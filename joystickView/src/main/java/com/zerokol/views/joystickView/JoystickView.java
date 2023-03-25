@@ -54,7 +54,7 @@ public class JoystickView extends View implements Runnable {
 
     protected void initJoystickView() {
         mainCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mainCircle.setColor(Color.WHITE);
+        mainCircle.setColor(Color.parseColor("#736c53"));
         mainCircle.setStyle(Paint.Style.FILL_AND_STROKE);
 
         secondaryCircle = new Paint();
@@ -63,14 +63,14 @@ public class JoystickView extends View implements Runnable {
 
         verticalLine = new Paint();
         verticalLine.setStrokeWidth(5);
-        verticalLine.setColor(Color.RED);
+        verticalLine.setColor(Color.BLACK);
 
         horizontalLine = new Paint();
         horizontalLine.setStrokeWidth(2);
         horizontalLine.setColor(Color.BLACK);
 
         button = new Paint(Paint.ANTI_ALIAS_FLAG);
-        button.setColor(Color.RED);
+        button.setColor(Color.parseColor("#c7ac56"));
         button.setStyle(Paint.Style.FILL);
     }
 

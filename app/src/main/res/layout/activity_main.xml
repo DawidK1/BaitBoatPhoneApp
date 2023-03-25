@@ -4,18 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/myBackground"
     tools:context=".MainActivity">
-
-    <Button
-        android:id="@+id/button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Button"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <com.zerokol.views.joystickView.JoystickView
         android:id="@+id/joystickView"
@@ -24,4 +14,74 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/gpsData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="25sp"
+        android:textColor="#00FF37"
+        android:text="gpsData"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/goHomeButton" />
+
+    <TextView
+        android:id="@+id/orientationText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="25sp"
+        android:textColor="#F7FF00"
+        android:text="orientation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/gpsData" />
+
+    <TextView
+        android:id="@+id/vbatText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="vbat"
+        android:textSize="25sp"
+        android:textColor="#00FFEA"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/orientationText" />
+
+    <TextView
+        android:id="@+id/tempPressText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="25sp"
+        android:textColor="#FF9900"
+        android:text="temp "
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/vbatText" />
+
+    <Button
+        android:id="@+id/setHomeButton"
+        android:layout_width="150sp"
+        android:layout_height="70sp"
+        android:text="Zapamiętaj"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dropButton" />
+
+    <Button
+        android:id="@+id/goHomeButton"
+        android:layout_width="150sp"
+        android:layout_height="70sp"
+        android:text="Powrót"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/dropButton" />
+
+    <Button
+        android:id="@+id/dropButton"
+        android:layout_width="match_parent"
+        android:layout_height="70sp"
+        android:text="Zrzut"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
