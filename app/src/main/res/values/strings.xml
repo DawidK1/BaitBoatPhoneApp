@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">BaitBoatPhoneApp</string>
+
+    <string-array name="dropDownMenuOptions">
+        <item>Więcej</item>
+        <item>Ustawienia</item>
+        <item>Miejsca (wkrótce)</item>
+        <item>Mapa (może kiedyś)</item>
+    </string-array>
 </resources>

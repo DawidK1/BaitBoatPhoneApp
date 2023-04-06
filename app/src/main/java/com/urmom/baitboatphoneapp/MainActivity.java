@@ -12,13 +12,20 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.zerokol.views.joystickView.JoystickView;
@@ -27,9 +34,11 @@ public class MainActivity extends AppCompatActivity {
     private final static int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
 
+    private  final static int SEND_TASK_PERIOD = 300;
     private Button mDropButton = null;
     private Button mSetHomeButton = null;
     private Button mGoHomeButton = null;
+    private Spinner dropDownMenu= null;
 
     private JoystickView joystickView = null;
     private TextView mGpsText = null;
@@ -52,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private double lastPressVal = 0;
 
     private final static String TAG = "BaitBoatPhoneApp";
-
+    private String deviceName = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,8 +96,7 @@ public class MainActivity extends AppCompatActivity {
         mOrientationText = findViewById(R.id.orientationText);
         mVbatText = findViewById(R.id.vbatText);
         mTempPressText = findViewById(R.id.tempPressText);
-
-
+        dropDownMenu = findViewById(R.id.dropDownMenu);
 
         mGpsText.setVisibility(View.INVISIBLE);
         mOrientationText.setVisibility(View.INVISIBLE);
@@ -98,8 +106,22 @@ public class MainActivity extends AppCompatActivity {
         mDropButton.setVisibility(View.INVISIBLE);
         mSetHomeButton.setVisibility(View.INVISIBLE);
         mGoHomeButton.setVisibility(View.INVISIBLE);
+        ArrayAdapter<CharSequence> adapter= ArrayAdapter.createFromResource(this, R.array.dropDownMenuOptions, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
+        dropDownMenu.setAdapter(adapter);
 
+        dropDownMenu.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                onSpinnerClick(i);
+                dropDownMenu.setSelection(0);
+            }
 
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                dropDownMenu.setSelection(0);
+            }
+        });
         mDropButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 sendLoadDrop();
@@ -134,14 +156,22 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 periodicControlSend();
-                mHandler.postDelayed(this, 200);
+                mHandler.postDelayed(this, SEND_TASK_PERIOD);
             }
         }, 2000);
 
+        updateSettings();
         Log.d(TAG, "OnCreate done");
     }
 
 
+    @Override
+    protected void onResume()
+    {
+        super.onResume();
+        updateSettings();
+
+    }
     private final BroadcastReceiver UARTStatusChangeReceiver = new BroadcastReceiver() {
 
         public void onReceive(Context context, Intent intent) {
@@ -243,13 +273,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void StartConnecting() {
-        if (mService.isTxPossible()) {
-            sendLoadDrop();
-        } else {
-
             mService.initialize();
+            mService.setDeviceName(deviceName);
             mService.startScanning();
-        }
+
 
     }
 
@@ -298,6 +325,7 @@ public class MainActivity extends AppCompatActivity {
 
     void sendLoadDrop() {
         mDropRequested = true;
+
     }
 
     void sendGoHome() {
@@ -324,7 +352,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void updateOrientationField(double orientation) {
-        mOrientationText.setText(String.format("%d° (PN-WSCH)", (int) orientation));
+        mOrientationText.setText(String.format("%d° (%s)", (int) orientation, mParser.getDirectionName((int)orientation)));
         if (mOrientationText.getVisibility() == View.INVISIBLE) {
             mOrientationText.setVisibility(View.VISIBLE);
         }
@@ -342,8 +370,10 @@ public class MainActivity extends AppCompatActivity {
         mJoyAngle = angle;
     }
 
+
     void periodicControlSend() {
-        byte[] msgToBoat = mParser.generateMotorValuesFromJoystick(mJoyPower, mJoyAngle);
+//        byte[] msgToBoat = mParser.generateMotorValuesFromJoystick(mJoyPower, mJoyAngle);
+        byte[] msgToBoat = "".getBytes();
 
         if (mService.isTxPossible()) {
             /// takes long time!
@@ -364,13 +394,30 @@ public class MainActivity extends AppCompatActivity {
                 mSetHomeRequested = false;
                 msgToBoat = extendArray(msgToBoat, mParser.getSetHomeRequest());
             }
-            Log.d(TAG, "Sending " + new String(msgToBoat, 0));
-            boolean result =mService.writeRXCharacteristic(msgToBoat);
+
+            if(!mService.isBleSending())
+            {
+                msgToBoat = extendArray(msgToBoat, mParser.generateMotorValuesFromJoystick(mJoyPower, mJoyAngle));
+            }
+
+            if(msgToBoat.length > 0)
+            {
+                Log.d(TAG, "Sending " + new String(msgToBoat, 0));
+                mService.sendData(msgToBoat);
+            }
+
         }
-
-
     }
 
+
+    void onSpinnerClick(int pos)
+    {
+        if (pos == 1)
+        {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+        }
+    }
     byte[] extendArray(byte[] arr1, byte[] arr2)
     {
         byte[] result = new byte[arr1.length + arr2.length];
@@ -384,7 +431,17 @@ public class MainActivity extends AppCompatActivity {
         }
     return result;
 
+    }
 
+    void updateSettings()
+    {
+        SharedPreferences sharedPref =
+                PreferenceManager.getDefaultSharedPreferences(this);
+        int boatPower = sharedPref.getInt("boat_max_power", 100);
+        String bleRelayName = sharedPref.getString("ble_device_name_pref", "");
 
+        deviceName = bleRelayName;
+        mParser.setMaxAllowedMotorVal(boatPower);
+        Log.d(TAG, "Max boat power " + boatPower);
     }
 }

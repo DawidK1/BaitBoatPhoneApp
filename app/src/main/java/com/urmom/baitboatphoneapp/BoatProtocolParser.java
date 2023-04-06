@@ -251,6 +251,27 @@ public class BoatProtocolParser {
         return rxParsedCommands.poll();
     }
 
+    public String getDirectionName(int heading)
+    {
+        int angles[] = {22,    67,        112,   157,       202,  247,       292,     337 };
+        String names[] = {"Pn", "Pn-Wsch", "Wsch", "Pd-Wsch", "Pd", "Pd-Zach", "Zach", "Pn-Zach"};
+
+        for(int i = 0; i < angles.length; i++)
+        {
+            if(heading < angles[i])
+            {
+                return names[i];
+            }
+        }
+
+        return names[0];
+    }
+
+    public void setMaxAllowedMotorVal(int val)
+    {
+        maxAllowedMotorVal = val;
+
+    }
 }
 
 

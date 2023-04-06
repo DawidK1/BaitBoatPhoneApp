@@ -29,11 +29,6 @@ import java.util.concurrent.Semaphore;
 public class UartService extends Service {
     private final static String TAG = UartService.class.getSimpleName();
 
-    private BluetoothManager mBluetoothManager;
-    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothLeScanner mBluetoothScanner;
-    private String mBluetoothDeviceAddress;
-    private BluetoothGatt mBluetoothGatt;
     private int mConnectionState = STATE_DISCONNECTED;
 
     private  boolean canTx = false;
@@ -42,7 +37,11 @@ public class UartService extends Service {
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
 
-    String mDeviceName = "UART Service";
+    private static final int TX_STATE_IDLE = 0;
+    private static final int TX_STATE_WAIT_FOR_CONFIRM = 1;
+
+
+    String mDeviceName = "noname";
 
 
     public final static String ACTION_GATT_CONNECTED =
@@ -68,10 +67,18 @@ public class UartService extends Service {
     public static final UUID TX_CHAR_UUID = UUID.fromString("6e400003-b5a3-f393-e0a9-e50e24dcca9e");
 
     private final Semaphore writeSema = new Semaphore(1);
-    int writeStatus;
 
+    private BluetoothManager mBluetoothManager;
+    private BluetoothAdapter mBluetoothAdapter;
+    private BluetoothLeScanner mBluetoothScanner;
+    private BluetoothGatt mBluetoothGatt;
+
+
+    int gattWriteState = TX_STATE_IDLE;
 
     private ConcurrentLinkedQueue<Byte> rxQueue = new ConcurrentLinkedQueue<Byte>();
+    private ConcurrentLinkedQueue<Byte> txQueue = new ConcurrentLinkedQueue<Byte>();
+
 
     // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
@@ -121,8 +128,14 @@ public class UartService extends Service {
         public void onCharacteristicWrite(BluetoothGatt gatt,
                                           BluetoothGattCharacteristic characteristic,
                                           int status) {
-            writeStatus = status;
-            writeSema.release();
+            Log.d(TAG, "Write done, status " + status);
+            if(txQueue.size() > 0)
+            {
+                startGattWrite();
+            }
+            else{
+                gattWriteState = TX_STATE_IDLE;
+            }
         }
 
         @Override
@@ -215,7 +228,6 @@ public class UartService extends Service {
     }
 
     public void startScanning() {
-
         mBluetoothScanner.startScan(leScanCallback);
     }
 
@@ -224,19 +236,6 @@ public class UartService extends Service {
             Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
             return false;
         }
-
-//        // Previously connected device.  Try to reconnect.
-//        if (mBluetoothDeviceAddress != null && address.equals(mBluetoothDeviceAddress)
-//                && mBluetoothGatt != null) {
-//            Log.d(TAG, "Trying to use an existing mBluetoothGatt for connection.");
-//            if (mBluetoothGatt.connect()) {
-//                mConnectionState = STATE_CONNECTING;
-//                return true;
-//            } else {
-//                Log.d(TAG, "failed to reconnect");
-//                return false;
-//            }
-//        }
 
         final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
         if (device == null) {
@@ -247,7 +246,6 @@ public class UartService extends Service {
         // parameter to false.
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
         Log.d(TAG, "Trying to create a new connection.");
-        mBluetoothDeviceAddress = address;
         mConnectionState = STATE_CONNECTING;
         return true;
     }
@@ -276,7 +274,6 @@ public class UartService extends Service {
             return;
         }
         Log.w(TAG, "mBluetoothGatt closed");
-        mBluetoothDeviceAddress = null;
         mBluetoothGatt.close();
         mBluetoothGatt = null;
     }
@@ -329,39 +326,57 @@ public class UartService extends Service {
 
     }
 
-    public boolean writeRXCharacteristic(byte[] value)
+    private void startGattWrite()
     {
+        Log.d(TAG, "Starting sending by GATT queue " + txQueue.size());
+        if(txQueue.size() == 0)
+        {
+            return;
+        }
         BluetoothGattService RxService = mBluetoothGatt.getService(RX_SERVICE_UUID);
         if (RxService == null) {
             showMessage("Rx service not found!");
 //            broadcastUpdate(DEVICE_DOES_NOT_SUPPORT_UART);
-            return false;
+            return;
         }
         BluetoothGattCharacteristic RxChar = RxService.getCharacteristic(RX_CHAR_UUID);
         if (RxChar == null) {
             showMessage("Rx charateristic not found!");
 //            broadcastUpdate(DEVICE_DOES_NOT_SUPPORT_UART);
-            return false;
+            return;
         }
 
-        try {
-            writeSema.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        RxChar.setValue(value);
-        writeStatus = -1;
-        boolean status = mBluetoothGatt.writeCharacteristic(RxChar);
-        if (!status)
-            return false;
+        int bytes_to_send = Math.min(20, txQueue.size());
 
-        try {
-            writeSema.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        byte[] bytes = new byte[bytes_to_send];
+        for(int i = 0; i < bytes_to_send; i++)
+        {
+            bytes[i] = txQueue.poll();
         }
-        writeSema.release();
-        return (writeStatus==BluetoothGatt.GATT_SUCCESS);
+
+        RxChar.setValue(bytes);
+        mBluetoothGatt.writeCharacteristic(RxChar);
+        Log.d(TAG, "Sent " + bytes.length);
+        gattWriteState = TX_STATE_WAIT_FOR_CONFIRM;
+    }
+
+
+    public void sendData(byte[] data)
+    {
+        for(int i = 0; i < data.length; i++)
+        {
+            txQueue.add(new Byte(data[i]));
+        }
+
+        if (gattWriteState == TX_STATE_IDLE)
+        {
+            startGattWrite();
+        }
+    }
+
+    public boolean isBleSending()
+    {
+        return gattWriteState != TX_STATE_IDLE;
     }
 
     private void showMessage(String msg) {
@@ -392,5 +407,10 @@ public class UartService extends Service {
     public Byte getRxByte()
     {
         return rxQueue.poll();
+    }
+
+    public void setDeviceName(String newName)
+    {
+        mDeviceName = newName;
     }
 }
