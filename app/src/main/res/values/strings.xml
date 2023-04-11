@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BaitBoatPhoneApp</string>
+    <string name="app_name">Kontroler Łódki</string>
 
     <string-array name="dropDownMenuOptions">
         <item>Więcej</item>

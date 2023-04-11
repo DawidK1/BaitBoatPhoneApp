@@ -40,6 +40,7 @@ public class UartService extends Service {
     private static final int TX_STATE_IDLE = 0;
     private static final int TX_STATE_WAIT_FOR_CONFIRM = 1;
 
+    private static final int WRITE_TIMEOUT_LIMIT = 30;
 
     String mDeviceName = "noname";
 
@@ -56,6 +57,8 @@ public class UartService extends Service {
             "com.nordicsemi.nrfUART.EXTRA_DATA";
     public final static String DEVICE_DOES_NOT_SUPPORT_UART =
             "com.nordicsemi.nrfUART.DEVICE_DOES_NOT_SUPPORT_UART";
+    public final static String DEVICE_DEAD_CONNECTION =
+            "com.nordicsemi.nrfUART.DEVICE_DEAD_CONNECTION";
 
     public static final UUID TX_POWER_UUID = UUID.fromString("00001804-0000-1000-8000-00805f9b34fb");
     public static final UUID TX_POWER_LEVEL_UUID = UUID.fromString("00002a07-0000-1000-8000-00805f9b34fb");
@@ -76,6 +79,8 @@ public class UartService extends Service {
 
     int gattWriteState = TX_STATE_IDLE;
 
+    public int disconnectReason;
+    private int writeTimeoutCounter = 0;
     private ConcurrentLinkedQueue<Byte> rxQueue = new ConcurrentLinkedQueue<Byte>();
     private ConcurrentLinkedQueue<Byte> txQueue = new ConcurrentLinkedQueue<Byte>();
 
@@ -93,12 +98,15 @@ public class UartService extends Service {
                 // Attempts to discover services after successful connection.
                 Log.i(TAG, "Attempting to start service discovery:" +
                         mBluetoothGatt.discoverServices());
+                broadcastUpdate(ACTION_GATT_CONNECTED);
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 mConnectionState = STATE_DISCONNECTED;
                 broadcastUpdate(ACTION_GATT_DISCONNECTED);
                 Log.i(TAG, "Disconnected from GATT server.");
+                Log.d(TAG, "reason " + status);
                 canTx = false;
+                disconnectReason = status;
             }
         }
 
@@ -156,7 +164,7 @@ public class UartService extends Service {
     private ScanCallback leScanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
-            Log.d(TAG, "Device Name: " + result.getDevice().getName() + " rssi: " + result.getRssi() + "\n");
+//            Log.d(TAG, "Device Name: " + result.getDevice().getName() + " rssi: " + result.getRssi() + "\n");
             if(result.getDevice().getName() != null && result.getDevice().getName().equals(mDeviceName))
             {
                 Log.d(TAG, "Found correct device, addr: " + result.getDevice().getAddress() + "\n");
@@ -228,7 +236,24 @@ public class UartService extends Service {
     }
 
     public void startScanning() {
-        mBluetoothScanner.startScan(leScanCallback);
+        boolean device_found = false;
+        List<BluetoothDevice> devices = mBluetoothManager.getConnectedDevices(BluetoothProfile.GATT);
+        Log.d(TAG, "Currently connected " + devices.size() + " devices");
+        for(BluetoothDevice d: devices)
+        {
+            Log.d(TAG, "Device name: " + d.getName());
+            if(d.getName() != null && d.getName().equals(mDeviceName))
+            {
+                mBluetoothGatt = d.connectGatt(this, false, mGattCallback);
+                Log.d(TAG, "Connecting to device from connected list");
+                device_found = true;
+            }
+        }
+        if(!device_found)
+        {
+            mBluetoothScanner.startScan(leScanCallback);
+            Log.d(TAG, "Requesting scanning");
+        }
     }
 
     public boolean connect(final String address) {
@@ -358,6 +383,7 @@ public class UartService extends Service {
         mBluetoothGatt.writeCharacteristic(RxChar);
         Log.d(TAG, "Sent " + bytes.length);
         gattWriteState = TX_STATE_WAIT_FOR_CONFIRM;
+        writeTimeoutCounter = 0;
     }
 
 
@@ -412,5 +438,18 @@ public class UartService extends Service {
     public void setDeviceName(String newName)
     {
         mDeviceName = newName;
+    }
+
+    void timeoutWatchdog()
+    {
+        if(gattWriteState == TX_STATE_WAIT_FOR_CONFIRM)
+        {
+            writeTimeoutCounter++;
+            if(writeTimeoutCounter >= WRITE_TIMEOUT_LIMIT)
+            {
+                broadcastUpdate(DEVICE_DEAD_CONNECTION);
+                disconnect();
+            }
+        }
     }
 }

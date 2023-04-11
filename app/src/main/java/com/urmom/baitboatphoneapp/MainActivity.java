@@ -27,6 +27,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.zerokol.views.joystickView.JoystickView;
 
@@ -180,18 +181,7 @@ public class MainActivity extends AppCompatActivity {
             final Intent mIntent = intent;
             //*********************//
             if (action.equals(UartService.ACTION_GATT_CONNECTED)) {
-                runOnUiThread(new Runnable() {
-                    public void run() {
-//                        String currentDateTimeString = DateFormat.getTimeInstance().format(new Date());
-//                        Log.d(TAG, "UART_CONNECT_MSG");
-//                        btnConnectDisconnect.setText("Disconnect");
-//                        uartConnected = true;
-//                        ((TextView) findViewById(R.id.deviceName)).setText(mDevice.getName()+ " - ready");
-//                        listAdapter.add("["+currentDateTimeString+"] Connected to: "+ mDevice.getName());
-//                        messageListView.smoothScrollToPosition(listAdapter.getCount() - 1);
-//                        mState = UART_PROFILE_CONNECTED;
-                    }
-                });
+                ShowWarning("Połączono");
             }
 
             //*********************//
@@ -205,6 +195,8 @@ public class MainActivity extends AppCompatActivity {
                         mGoHomeButton.setVisibility(View.INVISIBLE);
                     }
                 });
+
+                ShowWarning("Rozłączono, powód: " + mService.disconnectReason);
             }
 
 
@@ -229,9 +221,8 @@ public class MainActivity extends AppCompatActivity {
                 mService.disconnect();
             }
             //*********************//
-            if (action.equals(UartService.DEVICE_DOES_NOT_SUPPORT_UART)) {
-//                showMessage("Device doesn't support UART. Disconnecting");
-                mService.disconnect();
+            if (action.equals(UartService.DEVICE_DEAD_CONNECTION)) {
+                ShowWarning("Brak komunikacji, reset połączenia");
             }
 
         }
@@ -280,8 +271,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    void ShowWarning(String warningText) {
-
+    void ShowWarning(final String warningText) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), warningText, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     void processBoatMessages() {
@@ -376,7 +372,7 @@ public class MainActivity extends AppCompatActivity {
         byte[] msgToBoat = "".getBytes();
 
         if (mService.isTxPossible()) {
-            /// takes long time!
+            mService.timeoutWatchdog();
             if(mDropRequested)
             {
                 mDropRequested = false;
@@ -439,9 +435,9 @@ public class MainActivity extends AppCompatActivity {
                 PreferenceManager.getDefaultSharedPreferences(this);
         int boatPower = sharedPref.getInt("boat_max_power", 100);
         String bleRelayName = sharedPref.getString("ble_device_name_pref", "");
-
+        int motorCompensation = sharedPref.getInt("boat_motor_compensation", 0);
         deviceName = bleRelayName;
         mParser.setMaxAllowedMotorVal(boatPower);
-        Log.d(TAG, "Max boat power " + boatPower);
+        mParser.setMotorCompensation(motorCompensation);
     }
 }

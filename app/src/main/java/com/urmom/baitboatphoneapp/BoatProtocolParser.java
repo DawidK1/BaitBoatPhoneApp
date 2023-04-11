@@ -19,6 +19,7 @@ public class BoatProtocolParser {
     private int slowAngularVelThreshold = 45;
     private double slowAngularCoeff = 0.4;
     private int maxAllowedMotorVal = 100;
+    private double motorIneqalityCompensation = 1.0;
     ArrayList<Byte> rxBuffer = new ArrayList<Byte>();
 
     ConcurrentLinkedQueue<ReceivedBoatMessage> rxParsedCommands = new ConcurrentLinkedQueue<>();
@@ -82,13 +83,16 @@ public class BoatProtocolParser {
         }
 
         // linear/angular
-        linearVel = ((90 - Math.abs(angle)) * power) / 90;
-        angularVel *= (double) angle * 10.0 / 9.0;
+        linearVel = (maxAllowedMotorVal/100.0)*((90 - Math.abs(angle)) * power) / 90;
+        angularVel *= (maxAllowedMotorVal/100.0)*(double) angle * 10.0 / 9.0;
 
 
         // values calc
         motorLeft = linearVel + angularVel;
         motorRight = linearVel - angularVel;
+
+        motorLeft *= motorIneqalityCompensation;
+        motorRight *= (2.0 - motorIneqalityCompensation);
 
         // Saturation check
         double maxMotorVal = Math.max(Math.abs(motorLeft), Math.abs((motorRight)));
@@ -272,6 +276,12 @@ public class BoatProtocolParser {
         maxAllowedMotorVal = val;
 
     }
+
+    public void setMotorCompensation(int compensationPercent)
+    {
+        motorIneqalityCompensation = 1.0 + (((double) compensationPercent)/100.0);
+    }
+
 }
 
 
