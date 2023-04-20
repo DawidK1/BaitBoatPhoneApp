@@ -19,8 +19,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -34,6 +32,8 @@ import com.zerokol.views.joystickView.JoystickView;
 public class MainActivity extends AppCompatActivity {
     private final static int REQUEST_ENABLE_BT = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
+
+    public static Context context;
 
     private  final static int SEND_TASK_PERIOD = 300;
     private Button mDropButton = null;
@@ -71,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         final String TAG = "MainActivityBoat";
 
         mHandler = new Handler();
+        context = getApplicationContext();
 
         // Make sure we have access coarse location enabled, if not, prompt the user to enable it
         if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -162,6 +163,7 @@ public class MainActivity extends AppCompatActivity {
         }, 2000);
 
         updateSettings();
+
         Log.d(TAG, "OnCreate done");
     }
 
@@ -411,6 +413,12 @@ public class MainActivity extends AppCompatActivity {
         if (pos == 1)
         {
             Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+        }
+
+        else if(pos == 2)
+        {
+            Intent intent = new Intent(this, GpsPointsActivity.class);
             startActivity(intent);
         }
     }

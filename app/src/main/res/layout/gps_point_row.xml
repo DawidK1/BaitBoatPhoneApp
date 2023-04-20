@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="1dp"
+        app:cardCornerRadius="2dp"
+        app:cardElevation="10dp"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+
+        app:cardBackgroundColor="@color/pointButton">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/pointLogo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@android:drawable/ic_dialog_map" />
+
+            <TextView
+                android:id="@+id/point_name_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nazwa Punktu"
+                app:layout_constraintStart_toEndOf="@+id/pointLogo"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/point_coords"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="50.000000N 30.000000E"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/point_distance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Odległość 40m"
+                app:layout_constraintStart_toEndOf="@+id/pointLogo"
+                app:layout_constraintTop_toBottomOf="@+id/point_name_text" />
+
+            <TextView
+                android:id="@+id/point_depth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:text="głębokość: 2.3m"
+                app:layout_constraintTop_toBottomOf="@+id/point_coords" />
+
+            <TextView
+                android:id="@+id/point_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="W tym punkcie był jesiotr 10 lat temu i od tego czasu nic nie bierze ale musiałem coś tutaj wpisać"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/point_distance" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+</androidx.constraintlayout.widget.ConstraintLayout>
