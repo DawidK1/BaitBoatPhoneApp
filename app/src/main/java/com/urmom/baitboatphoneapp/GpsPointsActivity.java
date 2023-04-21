@@ -64,8 +64,8 @@ public class GpsPointsActivity extends AppCompatActivity implements GpsPointRecy
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault());
         String currentDateandTime = sdf.format(new Date());
-        point.name = "Nowy " + currentDateandTime;
-        point.description = "Opis punktu";
+        point.name = "Nowy punkt";
+        point.description = "Punkt utworzony " + currentDateandTime + ".";
 
 
         mPointManager.add(point);
