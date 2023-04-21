@@ -28,9 +28,12 @@ public class PointManager {
         loadPointsFromFile();
     }
 
-
     public void add(GpsPoint point) {
-        points.add(point);
+        add(point, 0);
+    }
+
+    public void add(GpsPoint point, int idx) {
+        points.add(idx, point);
         savePointsToFile();
     }
 
@@ -94,6 +97,7 @@ public class PointManager {
                 point.name = ((JSONObject) array.get(i)).getString("name");
                 point.description = ((JSONObject) array.get(i)).getString("description");
                 point.modificationDate = ((JSONObject) array.get(i)).getInt("modificationDate");
+                point.depth = ((JSONObject) array.get(i)).getDouble("depth");
                 result.add(point);
             }
         } catch (Exception e) {
@@ -124,9 +128,26 @@ public class PointManager {
         }
     }
 
-    LinkedList<GpsPoint> getPoints()
-    {
+    LinkedList<GpsPoint> getPoints() {
         return points;
     }
 
+    public void deletePoint(GpsPoint point) {
+        if (points.remove(point)) {
+            Log.d(TAG, "Point removed successfully");
+            savePointsToFile();
+        }
+    }
+
+    public void editPoint(GpsPoint refPoint, GpsPoint newPoint) {
+        if (refPoint.equals(newPoint)) {
+            Log.d(TAG, "No changes, no edit");
+            return;
+        }
+        int idx = points.indexOf(refPoint);
+        if (points.remove(refPoint)) {
+            Log.d(TAG, "Point edited");
+            add(newPoint, idx);
+        }
+    }
 }

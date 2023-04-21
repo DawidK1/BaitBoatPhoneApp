@@ -4,8 +4,16 @@
     <string-array name="dropDownMenuOptions">
         <item>Więcej</item>
         <item>Ustawienia</item>
-        <item>Miejsca (wkrótce)</item>
-        <item>Mapa (może kiedyś)</item>
+        <item>Miejsca</item>
+        <item>Mapa</item>
+    </string-array>
+
+    <string-array name="gpsPointClickArray">
+        <item>Płyń do punktu</item>
+        <item>Edytuj punkt</item>
+        <item>Pokaż na mapie</item>
+        <item>Usuń</item>
+
     </string-array>
     <string name="title_activity_gps_points">GpsPointsActivity</string>
     <string name="large_text">

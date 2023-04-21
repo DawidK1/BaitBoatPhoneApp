@@ -35,7 +35,7 @@ public class GpsP_RecyclerViewAdapter extends RecyclerView.Adapter<GpsP_Recycler
         GpsPoint p = points.get(position);
         holder.tvName.setText(" " + p.name);
         holder.tvDescription.setText(" " + p.description);
-        holder.tvCoords.setText(String.format("%.6fN %.6fE ",p.latitude, p.longitude));
+        holder.tvCoords.setText(String.format("%.6fN \n%.6fE ",p.longitude, p.latitude));
         holder.tvDistance.setText(String.format(" Odległość %dm", (int)p.distance));
         holder.tvDepth.setText(String.format("Głębokość: %.1fm ", p.depth));
 

@@ -3,9 +3,9 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#06201E</color>
     <color name="colorAccent">#D81B60</color>
-    <color name="myBackground">#131313</color>
-    <color name="buttonBackground">#4A4242</color>
-    <color name="pointButton">#736c53</color>
-    <color name="pointBackground">#786969</color>
+    <color name="color_darker_background">#131313</color>
+    <color name="color_background_for_text">#736c53</color>
+    <color name="color_lighter_background_for_text">#58693A</color>
+    <color name="color_white_text">#FFFFFF</color>
 
 </resources>

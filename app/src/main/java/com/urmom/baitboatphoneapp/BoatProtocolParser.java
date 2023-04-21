@@ -123,6 +123,11 @@ public class BoatProtocolParser {
         return "YY_".getBytes();
     }
 
+    byte[] getGoToPointRequest(double latitude, double longitude) {
+        return String.format("I%08X-%08X_", (int)(latitude *1000000.0), (int)(longitude *1000000.0)).getBytes();
+    }
+
+
 // "MXX_" - sends compass orientation in hex. value 0 is 0 degrees and 240 is 360 degrees. 241-255 invalid
 // "NXXXXXXXX-XXXXXXXX_" - sends GPS position in hex. first lattitude, second longitude. to parse back to double, divide both values by 1000000
 // "OXXXX_" - sends pressure in hex. to parse back to hPa, parse it as uint16, then divide by 10, at the end add 900.

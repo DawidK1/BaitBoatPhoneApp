@@ -61,6 +61,13 @@ public class MainActivity extends AppCompatActivity {
     private double lastTempVal = 0;
     private double lastPressVal = 0;
 
+    public static double lastBoatLattitude = 19.94579406207298;
+    public static double lastBoatLongitude = 50.05745068299209;
+
+    static GpsPoint lastRequestedGoal = new GpsPoint();
+    public static boolean isNewGoalRequested = false;
+
+
     private final static String TAG = "BaitBoatPhoneApp";
     private String deviceName = "";
 
@@ -108,8 +115,8 @@ public class MainActivity extends AppCompatActivity {
         mDropButton.setVisibility(View.INVISIBLE);
         mSetHomeButton.setVisibility(View.INVISIBLE);
         mGoHomeButton.setVisibility(View.INVISIBLE);
-        ArrayAdapter<CharSequence> adapter= ArrayAdapter.createFromResource(this, R.array.dropDownMenuOptions, android.R.layout.simple_spinner_item);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_item);
+        ArrayAdapter<CharSequence> adapter= ArrayAdapter.createFromResource(this, R.array.dropDownMenuOptions, R.layout.main_spinner_item);
+        adapter.setDropDownViewResource(R.layout.main_spinner_item);
         dropDownMenu.setAdapter(adapter);
 
         dropDownMenu.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -289,8 +296,6 @@ public class MainActivity extends AppCompatActivity {
 
         while (mParser.isRxCommandAvailable()) {
             cmd = mParser.getBoatMessage();
-//            Log.d(TAG,"Got Boat msg! ID is " + cmd.type + " val1 is " + cmd.val1 + " val2 is " + cmd.val2);
-
             switch (cmd.type) {
                 case BoatProtocolParser.TYPE_GPS: {
                     updateGpsField(cmd.val1, cmd.val2);
@@ -334,6 +339,13 @@ public class MainActivity extends AppCompatActivity {
         mSetHomeRequested = true;
     }
 
+    static void requestGoToTarget(GpsPoint point)
+    {
+        lastRequestedGoal = point;
+        MainActivity.isNewGoalRequested = true;
+        Log.d(TAG, "Requested going to point " + point.name);
+
+    }
 
     void updateGpsField(double lat, double lon) {
         mGpsText.setText(String.format("%.6fN, %.6fW", lat, lon));
@@ -375,6 +387,13 @@ public class MainActivity extends AppCompatActivity {
 
         if (mService.isTxPossible()) {
             mService.timeoutWatchdog();
+
+            if(MainActivity.isNewGoalRequested)
+            {
+                msgToBoat = extendArray(msgToBoat, mParser.getGoToPointRequest(lastRequestedGoal.latitude, lastRequestedGoal.longitude));
+                ShowWarning("Wysyłam łódkę do punktu o nazwie " + lastRequestedGoal.name);
+                MainActivity.isNewGoalRequested = false;
+            }
             if(mDropRequested)
             {
                 mDropRequested = false;
