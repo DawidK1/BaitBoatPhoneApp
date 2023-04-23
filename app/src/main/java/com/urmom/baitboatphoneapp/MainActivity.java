@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private double lastTempVal = 0;
     private double lastPressVal = 0;
 
-    public static double lastBoatLattitude = 50.05745068299209;
+    public static double lastBoatLatitude = 50.05745068299209;
     public static double lastBoatLongitude = 19.94579406207298;
 
     static GpsPoint lastRequestedGoal = new GpsPoint();
@@ -299,6 +299,8 @@ public class MainActivity extends AppCompatActivity {
             switch (cmd.type) {
                 case BoatProtocolParser.TYPE_GPS: {
                     updateGpsField(cmd.val1, cmd.val2);
+                    lastBoatLatitude = cmd.val1;
+                    lastBoatLongitude = cmd.val2;
                     break;
                 }
                 case BoatProtocolParser.TYPE_COMPASS: {

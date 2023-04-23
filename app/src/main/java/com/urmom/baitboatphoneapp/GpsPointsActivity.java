@@ -58,7 +58,7 @@ public class GpsPointsActivity extends AppCompatActivity implements GpsPointsRec
 
     private void onAddButtonClick() {
         final GpsPoint point = new GpsPoint();
-        point.latitude = MainActivity.lastBoatLattitude;
+        point.latitude = MainActivity.lastBoatLatitude;
         point.longitude = MainActivity.lastBoatLongitude;
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault());
