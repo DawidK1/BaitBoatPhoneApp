@@ -11,14 +11,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class GpsPointsActivity extends AppCompatActivity implements GpsPointRecyclerInterface {
+public class GpsPointsActivity extends AppCompatActivity implements GpsPointsRecyclerInterface {
     private final static String TAG = "BaitBoatPhoneApp";
-    PointManager mPointManager = null;
+    PointsManager mPointsManager = null;
     Button addNewPointButton;
     RecyclerView recyclerView;
 
@@ -27,9 +26,9 @@ public class GpsPointsActivity extends AppCompatActivity implements GpsPointRecy
         super.onCreate(savedInstanceState);
         setContentView(R.layout.gps_points_activity);
         recyclerView = findViewById(R.id.points_recycler_view);
-        mPointManager = new PointManager();
+        mPointsManager = new PointsManager();
 
-        GpsP_RecyclerViewAdapter adapter = new GpsP_RecyclerViewAdapter(this, mPointManager.getPoints(), this);
+        GpsPoints_RecyclerViewAdapter adapter = new GpsPoints_RecyclerViewAdapter(this, mPointsManager.getPoints(), this);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -45,9 +44,9 @@ public class GpsPointsActivity extends AppCompatActivity implements GpsPointRecy
 
     @Override
     public void onItemClick(int position) {
-        GpsPoint point = mPointManager.getPoints().get(position);
+        GpsPoint point = mPointsManager.getPoints().get(position);
         Log.d(TAG, String.format("Clicked point: id %d, name:%s, lat %f lon %f", position, point.name, point.latitude, point.longitude));
-        new GpsPointClickDIalog(point, mPointManager, this).show(getSupportFragmentManager(), "fragmentDialog");
+        new GpsPointClickDIalog(point, mPointsManager, this).show(getSupportFragmentManager(), "fragmentDialog");
     }
 
     @Override
@@ -68,7 +67,7 @@ public class GpsPointsActivity extends AppCompatActivity implements GpsPointRecy
         point.description = "Punkt utworzony " + currentDateandTime + ".";
 
 
-        mPointManager.add(point);
+        mPointsManager.add(point);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

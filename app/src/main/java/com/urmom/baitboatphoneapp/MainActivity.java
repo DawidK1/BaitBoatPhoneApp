@@ -61,8 +61,8 @@ public class MainActivity extends AppCompatActivity {
     private double lastTempVal = 0;
     private double lastPressVal = 0;
 
-    public static double lastBoatLattitude = 19.94579406207298;
-    public static double lastBoatLongitude = 50.05745068299209;
+    public static double lastBoatLattitude = 50.05745068299209;
+    public static double lastBoatLongitude = 19.94579406207298;
 
     static GpsPoint lastRequestedGoal = new GpsPoint();
     public static boolean isNewGoalRequested = false;
@@ -343,7 +343,7 @@ public class MainActivity extends AppCompatActivity {
     {
         lastRequestedGoal = point;
         MainActivity.isNewGoalRequested = true;
-        Log.d(TAG, "Requested going to point " + point.name);
+        Log.d(TAG, "Requested going to point " + point + " cmd: " + new String(new BoatProtocolParser().getGoToPointRequest(lastRequestedGoal.latitude, lastRequestedGoal.longitude),0));
 
     }
 
@@ -382,7 +382,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     void periodicControlSend() {
-//        byte[] msgToBoat = mParser.generateMotorValuesFromJoystick(mJoyPower, mJoyAngle);
         byte[] msgToBoat = "".getBytes();
 
         if (mService.isTxPossible()) {

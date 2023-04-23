@@ -15,11 +15,11 @@ import androidx.fragment.app.DialogFragment;
 
 public class GpsPointClickDIalog extends DialogFragment {
     GpsPoint point;
-    PointManager pointManager;
-    GpsPointRecyclerInterface gpsPointRecyclerInterface;
-    GpsPointClickDIalog(GpsPoint point, PointManager pointManager, GpsPointRecyclerInterface gpsPointRecyclerInterface){
+    PointsManager pointsManager;
+    GpsPointsRecyclerInterface gpsPointRecyclerInterface;
+    GpsPointClickDIalog(GpsPoint point, PointsManager pointsManager, GpsPointsRecyclerInterface gpsPointRecyclerInterface){
         this.point = point;
-        this.pointManager = pointManager;
+        this.pointsManager = pointsManager;
         this.gpsPointRecyclerInterface = gpsPointRecyclerInterface;
     }
     @NonNull
@@ -89,7 +89,7 @@ public class GpsPointClickDIalog extends DialogFragment {
                         newPoint.description = descText.getText().toString();
                         newPoint.depth = Double.valueOf(depthText.getText().toString());
 
-                        pointManager.editPoint(point, newPoint);
+                        pointsManager.editPoint(point, newPoint);
                         gpsPointRecyclerInterface.onSomethingChanged();
                     }
                 })
@@ -104,7 +104,7 @@ public class GpsPointClickDIalog extends DialogFragment {
         builder.setMessage("Czy na pewno chcesz usunąć punkt?").setPositiveButton("Tak", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                pointManager.deletePoint(point);
+                pointsManager.deletePoint(point);
                 Log.d("TAG", "deleted point");
                 gpsPointRecyclerInterface.onSomethingChanged();
             }

@@ -34,7 +34,12 @@ public class GpsPoint {
         equal &= name.equals(other.name);
         equal &= description.equals(other.description);
         return  equal;
+    }
 
 
+    @Override
+    public String toString() {
+        String result = String.format("\nName: %s\nDescription: %s\nlatitude: %f\nlongitude:%f\ndepth:%.1f\n", name, description, latitude, longitude, depth);
+        return  result;
     }
 }

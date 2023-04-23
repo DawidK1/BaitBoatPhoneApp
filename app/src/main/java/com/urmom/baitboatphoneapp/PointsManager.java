@@ -1,6 +1,5 @@
 package com.urmom.baitboatphoneapp;
 
-import android.content.Context;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -9,20 +8,19 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.util.LinkedList;
 
 ;
 
-public class PointManager {
+public class PointsManager {
     String TAG = "BaitBoatPhoneApp";
     private LinkedList<GpsPoint> points;
     private String filename = "points.txt";
     private String dirFilename = "baitBoatAppData";
 
-    public PointManager() {
+    public PointsManager() {
         points = new LinkedList<>();
         points.clear();
         loadPointsFromFile();
