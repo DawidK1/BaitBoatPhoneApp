@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
     static GpsPoint lastRequestedGoal = new GpsPoint();
     public static boolean isNewGoalRequested = false;
-
+    static byte[] externalBoatCmd = "".getBytes();
 
     private final static String TAG = "BaitBoatPhoneApp";
     private String deviceName = "";
@@ -349,6 +349,11 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    static void requestSpecialCmd(byte[] cmd)
+    {
+        extendArray(externalBoatCmd, cmd);
+    }
+
     void updateGpsField(double lat, double lon) {
         mGpsText.setText(String.format("%.6fN, %.6fW", lat, lon));
         if (mGpsText.getVisibility() == View.INVISIBLE) {
@@ -389,12 +394,20 @@ public class MainActivity extends AppCompatActivity {
         if (mService.isTxPossible()) {
             mService.timeoutWatchdog();
 
+
+            if(MainActivity.externalBoatCmd.length > 0)
+            {
+                msgToBoat = extendArray(msgToBoat, MainActivity.externalBoatCmd);
+                MainActivity.externalBoatCmd = "".getBytes();
+            }
+
             if(MainActivity.isNewGoalRequested)
             {
                 msgToBoat = extendArray(msgToBoat, mParser.getGoToPointRequest(lastRequestedGoal.latitude, lastRequestedGoal.longitude));
                 ShowWarning("Wysyłam łódkę do punktu o nazwie " + lastRequestedGoal.name);
                 MainActivity.isNewGoalRequested = false;
             }
+
             if(mDropRequested)
             {
                 mDropRequested = false;
@@ -441,8 +454,13 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(this, GpsPointsActivity.class);
             startActivity(intent);
         }
+
+        else if(pos == 3){
+            Intent intent = new Intent(this, ExtraControlActivity.class);
+            startActivity(intent);
+        }
     }
-    byte[] extendArray(byte[] arr1, byte[] arr2)
+    static byte[] extendArray(byte[] arr1, byte[] arr2)
     {
         byte[] result = new byte[arr1.length + arr2.length];
         for(int i = 0 ; i < arr1.length; i++)

@@ -123,6 +123,23 @@ public class BoatProtocolParser {
         return "YY_".getBytes();
     }
 
+    static byte[] getSetLedRequest(int val) {
+        return String.format("J%02X_", val).getBytes();
+    }
+
+    static byte[] getCalibVoltageRequest(double realVoltage) {
+        return String.format("IIOO%04X_", (int)(realVoltage*100.0)).getBytes();
+    }
+
+    static byte[] getCalibPressureRequest(double realPressure) {
+        return String.format("IIPP%04X_", (int)((realPressure - 900.0)*10.0)).getBytes();
+    }
+
+    static byte[] getCalibMotorCompensationRequest(int compensation) {
+        return String.format("IINN%02X_", compensation + 100).getBytes();
+    }
+
+
     byte[] getGoToPointRequest(double latitude, double longitude) {
         return String.format("I%08X-%08X_", (int)(latitude *1000000.0), (int)(longitude *1000000.0)).getBytes();
     }

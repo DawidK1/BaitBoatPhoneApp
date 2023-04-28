@@ -22,6 +22,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".ExtraControlActivity"
+            android:exported="false" />
+        <activity
             android:name=".GpsPointsActivity"
             android:exported="false"
             android:label="@string/title_activity_gps_points"

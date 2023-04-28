@@ -3,6 +3,8 @@ package com.urmom.baitboatphoneapp;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -44,7 +46,7 @@ public class GpsPointClickDIalog extends DialogFragment {
 
                 if(i == 2)
                 {
-                  // google maps
+                    onShowPointClick();
                 }
 
                 if(i == 3)
@@ -116,6 +118,16 @@ public class GpsPointClickDIalog extends DialogFragment {
         //Setting the title manually
         alert.setTitle("USUWANIE PUNKTU");
         alert.show();
+    }
+
+    void onShowPointClick()
+    {
+        Uri gmmIntentUri = Uri.parse(String.format("geo:%f,%f(Label+Name)", point.latitude, point.longitude));
+        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+        mapIntent.setPackage("com.google.android.apps.maps");
+        if (mapIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+            startActivity(mapIntent);
+        }
     }
 }
 

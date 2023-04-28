@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/color_darker_background"
+    tools:context=".ExtraControlActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/special_cmd_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Specjalna Komenda" />
+
+        <TextView
+            android:id="@+id/led_value_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/color_background_for_text"
+            android:gravity="center"
+            android:text="Jasność LED"
+            android:textColor="@color/color_white_text"
+            android:textSize="25sp" />
+
+        <SeekBar
+            android:id="@+id/led_set_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/color_background_for_text"
+            android:max="100"
+            android:min="0"
+            android:paddingBottom="30sp" />
+
+        <Button
+            android:id="@+id/calib_voltage_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Kal. Napięcia" />
+
+        <Button
+            android:id="@+id/calib_pressure_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Kal. ciśnienia" />
+
+        <Button
+            android:id="@+id/motor_compensation_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Kompensacja silników" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
