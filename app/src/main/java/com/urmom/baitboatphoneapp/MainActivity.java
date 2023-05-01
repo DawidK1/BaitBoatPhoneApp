@@ -14,6 +14,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -158,6 +159,13 @@ public class MainActivity extends AppCompatActivity {
             }
         }, JoystickView.DEFAULT_LOOP_INTERVAL);
 
+        mGpsText.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                onGpsTextLongClick();
+                return true;
+            }
+        });
         mParser = new BoatProtocolParser();
         service_init();
 
@@ -351,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
 
     static void requestSpecialCmd(byte[] cmd)
     {
-        extendArray(externalBoatCmd, cmd);
+        externalBoatCmd = extendArray(externalBoatCmd, cmd);
     }
 
     void updateGpsField(double lat, double lon) {
@@ -475,6 +483,15 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    void onGpsTextLongClick()
+    {
+        Uri gmmIntentUri = Uri.parse(String.format("geo:%f,%f(Label+Name)", lastBoatLatitude, lastBoatLongitude));
+        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+        mapIntent.setPackage("com.google.android.apps.maps");
+        if (mapIntent.resolveActivity(this.getPackageManager()) != null) {
+            startActivity(mapIntent);
+        }
+    }
     void updateSettings()
     {
         SharedPreferences sharedPref =

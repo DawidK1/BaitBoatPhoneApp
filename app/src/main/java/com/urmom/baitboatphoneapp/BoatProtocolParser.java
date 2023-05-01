@@ -1,5 +1,7 @@
 package com.urmom.baitboatphoneapp;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -103,7 +105,7 @@ public class BoatProtocolParser {
 
         motorLeftInt = (int) motorLeft;
         motorRightInt = (int) motorRight;
-//        Log.d(TAG, "Motors L: " + motorLeftInt + " R: " + motorRightInt);
+        Log.d(TAG, "Motors L: " + motorLeftInt + " R: " + motorRightInt);
         return encodeMotorValues(motorLeftInt, motorRightInt);
     }
 

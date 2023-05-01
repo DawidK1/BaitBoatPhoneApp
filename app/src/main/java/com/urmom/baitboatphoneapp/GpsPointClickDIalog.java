@@ -89,7 +89,7 @@ public class GpsPointClickDIalog extends DialogFragment {
                         newPoint.depth = point.depth;
                         newPoint.name = nameText.getText().toString();
                         newPoint.description = descText.getText().toString();
-                        newPoint.depth = Double.valueOf(depthText.getText().toString());
+                        newPoint.depth = Double.valueOf(depthText.getText().toString().replace(",","."));
 
                         pointsManager.editPoint(point, newPoint);
                         gpsPointRecyclerInterface.onSomethingChanged();

@@ -1,0 +1,430 @@
+From dfe99e110877da21021038eacd825a1064dea500 Mon Sep 17 00:00:00 2001
+From: Kseniia Sych <sychKS94@gmail.com>
+Date: Mon, 10 Apr 2023 21:06:30 +0200
+Subject: [PATCH] added logo, added motor compensation
+
+---
+ .idea/compiler.xml                            |   6 +++
+ .idea/jarRepositories.xml                     |  25 ++++++++++
+ .idea/misc.xml                                |   3 +-
+ .idea/runConfigurations.xml                   |  12 -----
+ app/src/main/AndroidManifest.xml              |   9 ++--
+ .../baitboatphoneapp/BoatProtocolParser.java  |  14 +++++-
+ .../urmom/baitboatphoneapp/MainActivity.java  |  36 +++++++--------
+ .../urmom/baitboatphoneapp/UartService.java   |  43 +++++++++++++++++-
+ app/src/main/res/drawable/app_logo.png        | Bin 0 -> 639 bytes
+ app/src/main/res/values/strings.xml           |   2 +-
+ app/src/main/res/xml/preferences.xml          |  13 ++++++
+ 11 files changed, 122 insertions(+), 41 deletions(-)
+ create mode 100644 .idea/compiler.xml
+ create mode 100644 .idea/jarRepositories.xml
+ delete mode 100644 .idea/runConfigurations.xml
+ create mode 100644 app/src/main/res/drawable/app_logo.png
+
+diff --git a/.idea/compiler.xml b/.idea/compiler.xml
+new file mode 100644
+index 0000000..fb7f4a8
+--- /dev/null
++++ b/.idea/compiler.xml
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="CompilerConfiguration">
++    <bytecodeTargetLevel target="11" />
++  </component>
++</project>
+\ No newline at end of file
+diff --git a/.idea/jarRepositories.xml b/.idea/jarRepositories.xml
+new file mode 100644
+index 0000000..a5f05cd
+--- /dev/null
++++ b/.idea/jarRepositories.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="RemoteRepositoriesConfiguration">
++    <remote-repository>
++      <option name="id" value="central" />
++      <option name="name" value="Maven Central repository" />
++      <option name="url" value="https://repo1.maven.org/maven2" />
++    </remote-repository>
++    <remote-repository>
++      <option name="id" value="jboss.community" />
++      <option name="name" value="JBoss Community repository" />
++      <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
++    </remote-repository>
++    <remote-repository>
++      <option name="id" value="BintrayJCenter" />
++      <option name="name" value="BintrayJCenter" />
++      <option name="url" value="https://jcenter.bintray.com/" />
++    </remote-repository>
++    <remote-repository>
++      <option name="id" value="Google" />
++      <option name="name" value="Google" />
++      <option name="url" value="https://dl.google.com/dl/android/maven2/" />
++    </remote-repository>
++  </component>
++</project>
+\ No newline at end of file
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+index 37a7509..1996b74 100644
+--- a/.idea/misc.xml
++++ b/.idea/misc.xml
+@@ -1,6 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" project-jdk-name="1.8" project-jdk-type="JavaSDK">
++  <component name="ExternalStorageConfigurationManager" enabled="true" />
++  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="jbr-11" project-jdk-type="JavaSDK">
+     <output url="file://$PROJECT_DIR$/build/classes" />
+   </component>
+   <component name="ProjectType">
+diff --git a/.idea/runConfigurations.xml b/.idea/runConfigurations.xml
+deleted file mode 100644
+index 7f68460..0000000
+--- a/.idea/runConfigurations.xml
++++ /dev/null
+@@ -1,12 +0,0 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+-<project version="4">
+-  <component name="RunConfigurationProducerService">
+-    <option name="ignoredProducers">
+-      <set>
+-        <option value="org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer" />
+-        <option value="org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer" />
+-        <option value="org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer" />
+-      </set>
+-    </option>
+-  </component>
+-</project>
+\ No newline at end of file
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+index 53aa81f..f70c6d2 100644
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -12,16 +12,19 @@
+ 
+     <application
+         android:allowBackup="true"
+-        android:icon="@mipmap/ic_launcher"
++        android:icon="@drawable/app_logo"
+         android:label="@string/app_name"
+         android:roundIcon="@mipmap/ic_launcher_round"
+         android:supportsRtl="true"
+         android:theme="@style/AppTheme">
+-        <activity android:name=".SettingsActivity"></activity>
++        <activity android:name=".SettingsActivity"
++            android:screenOrientation="portrait"></activity>
+ 
+         <service android:name=".UartService" />
+ 
+-        <activity android:name=".MainActivity">
++        <activity android:name=".MainActivity"
++            android:screenOrientation="portrait">
++
+             <intent-filter>
+                 <action android:name="android.intent.action.MAIN" />
+ 
+diff --git a/app/src/main/java/com/urmom/baitboatphoneapp/BoatProtocolParser.java b/app/src/main/java/com/urmom/baitboatphoneapp/BoatProtocolParser.java
+index e46d77e..6eb6b6b 100644
+--- a/app/src/main/java/com/urmom/baitboatphoneapp/BoatProtocolParser.java
++++ b/app/src/main/java/com/urmom/baitboatphoneapp/BoatProtocolParser.java
+@@ -19,6 +19,7 @@ public class BoatProtocolParser {
+     private int slowAngularVelThreshold = 45;
+     private double slowAngularCoeff = 0.4;
+     private int maxAllowedMotorVal = 100;
++    private double motorIneqalityCompensation = 1.0;
+     ArrayList<Byte> rxBuffer = new ArrayList<Byte>();
+ 
+     ConcurrentLinkedQueue<ReceivedBoatMessage> rxParsedCommands = new ConcurrentLinkedQueue<>();
+@@ -82,14 +83,17 @@ public class BoatProtocolParser {
+         }
+ 
+         // linear/angular
+-        linearVel = ((90 - Math.abs(angle)) * power) / 90;
+-        angularVel *= (double) angle * 10.0 / 9.0;
++        linearVel = (maxAllowedMotorVal/100.0)*((90 - Math.abs(angle)) * power) / 90;
++        angularVel *= (maxAllowedMotorVal/100.0)*(double) angle * 10.0 / 9.0;
+ 
+ 
+         // values calc
+         motorLeft = linearVel + angularVel;
+         motorRight = linearVel - angularVel;
+ 
++        motorLeft *= motorIneqalityCompensation;
++        motorRight *= (2.0 - motorIneqalityCompensation);
++
+         // Saturation check
+         double maxMotorVal = Math.max(Math.abs(motorLeft), Math.abs((motorRight)));
+         if (maxMotorVal > maxAllowedMotorVal) {
+@@ -272,6 +276,12 @@ public class BoatProtocolParser {
+         maxAllowedMotorVal = val;
+ 
+     }
++
++    public void setMotorCompensation(int compensationPercent)
++    {
++        motorIneqalityCompensation = 1.0 + (((double) compensationPercent)/100.0);
++    }
++
+ }
+ 
+ 
+diff --git a/app/src/main/java/com/urmom/baitboatphoneapp/MainActivity.java b/app/src/main/java/com/urmom/baitboatphoneapp/MainActivity.java
+index 437b1da..67e09a9 100644
+--- a/app/src/main/java/com/urmom/baitboatphoneapp/MainActivity.java
++++ b/app/src/main/java/com/urmom/baitboatphoneapp/MainActivity.java
+@@ -27,6 +27,7 @@ import android.widget.ArrayAdapter;
+ import android.widget.Button;
+ import android.widget.Spinner;
+ import android.widget.TextView;
++import android.widget.Toast;
+ 
+ import com.zerokol.views.joystickView.JoystickView;
+ 
+@@ -180,18 +181,7 @@ public class MainActivity extends AppCompatActivity {
+             final Intent mIntent = intent;
+             //*********************//
+             if (action.equals(UartService.ACTION_GATT_CONNECTED)) {
+-                runOnUiThread(new Runnable() {
+-                    public void run() {
+-//                        String currentDateTimeString = DateFormat.getTimeInstance().format(new Date());
+-//                        Log.d(TAG, "UART_CONNECT_MSG");
+-//                        btnConnectDisconnect.setText("Disconnect");
+-//                        uartConnected = true;
+-//                        ((TextView) findViewById(R.id.deviceName)).setText(mDevice.getName()+ " - ready");
+-//                        listAdapter.add("["+currentDateTimeString+"] Connected to: "+ mDevice.getName());
+-//                        messageListView.smoothScrollToPosition(listAdapter.getCount() - 1);
+-//                        mState = UART_PROFILE_CONNECTED;
+-                    }
+-                });
++                ShowWarning("Połączono");
+             }
+ 
+             //*********************//
+@@ -205,6 +195,8 @@ public class MainActivity extends AppCompatActivity {
+                         mGoHomeButton.setVisibility(View.INVISIBLE);
+                     }
+                 });
++
++                ShowWarning("Rozłączono, powód: " + mService.disconnectReason);
+             }
+ 
+ 
+@@ -229,9 +221,8 @@ public class MainActivity extends AppCompatActivity {
+                 mService.disconnect();
+             }
+             //*********************//
+-            if (action.equals(UartService.DEVICE_DOES_NOT_SUPPORT_UART)) {
+-//                showMessage("Device doesn't support UART. Disconnecting");
+-                mService.disconnect();
++            if (action.equals(UartService.DEVICE_DEAD_CONNECTION)) {
++                ShowWarning("Brak komunikacji, reset połączenia");
+             }
+ 
+         }
+@@ -280,8 +271,13 @@ public class MainActivity extends AppCompatActivity {
+ 
+     }
+ 
+-    void ShowWarning(String warningText) {
+-
++    void ShowWarning(final String warningText) {
++        runOnUiThread(new Runnable() {
++            @Override
++            public void run() {
++                Toast.makeText(getApplicationContext(), warningText, Toast.LENGTH_SHORT).show();
++            }
++        });
+     }
+ 
+     void processBoatMessages() {
+@@ -376,7 +372,7 @@ public class MainActivity extends AppCompatActivity {
+         byte[] msgToBoat = "".getBytes();
+ 
+         if (mService.isTxPossible()) {
+-            /// takes long time!
++            mService.timeoutWatchdog();
+             if(mDropRequested)
+             {
+                 mDropRequested = false;
+@@ -439,9 +435,9 @@ public class MainActivity extends AppCompatActivity {
+                 PreferenceManager.getDefaultSharedPreferences(this);
+         int boatPower = sharedPref.getInt("boat_max_power", 100);
+         String bleRelayName = sharedPref.getString("ble_device_name_pref", "");
+-
++        int motorCompensation = sharedPref.getInt("boat_motor_compensation", 0);
+         deviceName = bleRelayName;
+         mParser.setMaxAllowedMotorVal(boatPower);
+-        Log.d(TAG, "Max boat power " + boatPower);
++        mParser.setMotorCompensation(motorCompensation);
+     }
+ }
+diff --git a/app/src/main/java/com/urmom/baitboatphoneapp/UartService.java b/app/src/main/java/com/urmom/baitboatphoneapp/UartService.java
+index 3fa3f68..abbe517 100644
+--- a/app/src/main/java/com/urmom/baitboatphoneapp/UartService.java
++++ b/app/src/main/java/com/urmom/baitboatphoneapp/UartService.java
+@@ -40,6 +40,7 @@ public class UartService extends Service {
+     private static final int TX_STATE_IDLE = 0;
+     private static final int TX_STATE_WAIT_FOR_CONFIRM = 1;
+ 
++    private static final int WRITE_TIMEOUT_LIMIT = 30;
+ 
+     String mDeviceName = "noname";
+ 
+@@ -56,6 +57,8 @@ public class UartService extends Service {
+             "com.nordicsemi.nrfUART.EXTRA_DATA";
+     public final static String DEVICE_DOES_NOT_SUPPORT_UART =
+             "com.nordicsemi.nrfUART.DEVICE_DOES_NOT_SUPPORT_UART";
++    public final static String DEVICE_DEAD_CONNECTION =
++            "com.nordicsemi.nrfUART.DEVICE_DEAD_CONNECTION";
+ 
+     public static final UUID TX_POWER_UUID = UUID.fromString("00001804-0000-1000-8000-00805f9b34fb");
+     public static final UUID TX_POWER_LEVEL_UUID = UUID.fromString("00002a07-0000-1000-8000-00805f9b34fb");
+@@ -76,6 +79,8 @@ public class UartService extends Service {
+ 
+     int gattWriteState = TX_STATE_IDLE;
+ 
++    public int disconnectReason;
++    private int writeTimeoutCounter = 0;
+     private ConcurrentLinkedQueue<Byte> rxQueue = new ConcurrentLinkedQueue<Byte>();
+     private ConcurrentLinkedQueue<Byte> txQueue = new ConcurrentLinkedQueue<Byte>();
+ 
+@@ -93,12 +98,15 @@ public class UartService extends Service {
+                 // Attempts to discover services after successful connection.
+                 Log.i(TAG, "Attempting to start service discovery:" +
+                         mBluetoothGatt.discoverServices());
++                broadcastUpdate(ACTION_GATT_CONNECTED);
+ 
+             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                 mConnectionState = STATE_DISCONNECTED;
+                 broadcastUpdate(ACTION_GATT_DISCONNECTED);
+                 Log.i(TAG, "Disconnected from GATT server.");
++                Log.d(TAG, "reason " + status);
+                 canTx = false;
++                disconnectReason = status;
+             }
+         }
+ 
+@@ -156,7 +164,7 @@ public class UartService extends Service {
+     private ScanCallback leScanCallback = new ScanCallback() {
+         @Override
+         public void onScanResult(int callbackType, ScanResult result) {
+-            Log.d(TAG, "Device Name: " + result.getDevice().getName() + " rssi: " + result.getRssi() + "\n");
++//            Log.d(TAG, "Device Name: " + result.getDevice().getName() + " rssi: " + result.getRssi() + "\n");
+             if(result.getDevice().getName() != null && result.getDevice().getName().equals(mDeviceName))
+             {
+                 Log.d(TAG, "Found correct device, addr: " + result.getDevice().getAddress() + "\n");
+@@ -228,7 +236,24 @@ public class UartService extends Service {
+     }
+ 
+     public void startScanning() {
+-        mBluetoothScanner.startScan(leScanCallback);
++        boolean device_found = false;
++        List<BluetoothDevice> devices = mBluetoothManager.getConnectedDevices(BluetoothProfile.GATT);
++        Log.d(TAG, "Currently connected " + devices.size() + " devices");
++        for(BluetoothDevice d: devices)
++        {
++            Log.d(TAG, "Device name: " + d.getName());
++            if(d.getName() != null && d.getName().equals(mDeviceName))
++            {
++                mBluetoothGatt = d.connectGatt(this, false, mGattCallback);
++                Log.d(TAG, "Connecting to device from connected list");
++                device_found = true;
++            }
++        }
++        if(!device_found)
++        {
++            mBluetoothScanner.startScan(leScanCallback);
++            Log.d(TAG, "Requesting scanning");
++        }
+     }
+ 
+     public boolean connect(final String address) {
+@@ -358,6 +383,7 @@ public class UartService extends Service {
+         mBluetoothGatt.writeCharacteristic(RxChar);
+         Log.d(TAG, "Sent " + bytes.length);
+         gattWriteState = TX_STATE_WAIT_FOR_CONFIRM;
++        writeTimeoutCounter = 0;
+     }
+ 
+ 
+@@ -413,4 +439,17 @@ public class UartService extends Service {
+     {
+         mDeviceName = newName;
+     }
++
++    void timeoutWatchdog()
++    {
++        if(gattWriteState == TX_STATE_WAIT_FOR_CONFIRM)
++        {
++            writeTimeoutCounter++;
++            if(writeTimeoutCounter >= WRITE_TIMEOUT_LIMIT)
++            {
++                broadcastUpdate(DEVICE_DEAD_CONNECTION);
++                disconnect();
++            }
++        }
++    }
+ }
+\ No newline at end of file
+diff --git a/app/src/main/res/drawable/app_logo.png b/app/src/main/res/drawable/app_logo.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..cf407df452588a2ad900fb3231494671e0d989ac
+GIT binary patch
+literal 639
+zcmV-_0)YLAP)<h;3K|Lk000e1NJLTq004Rb004Rj0{{R3M~Ao80001BP)t-s|Ns90
+z001Z`C_FqoTwGlB_4SaDkmTg#ii(PIa&r9q{Ggzq#>U3JzP{}2?4+cmLPA0v9UXpt
+zelRdF+1c4>XlR(2m>C%v4-XHltgOz?&bGF;Qc_YPA|gyoOjlP|g=%E(0005nNkl<Z
+zXo2mR*_whd3`S*>)w1vEy#HGcrF;%30Ug_N^Pk(O$IvuQIh_Ci00000000000FXdc
+zn{Se4lGSJ9eca>J-f?QfIZj<kRfoAH$i=TW7Qq;ms(#>3nNhXm^I)sST?(~N{k3KY
+znt>8^C)70~;u(+jO4Pw!xI-d7uE<?Y+O1HhRNUjyNQv5Mg!@9o84vy_QH!(;<GLB|
+zl&IOx{&INGR-!)HLQNh~W9uuFsH2@;J*HhMQJ+kqj;Z*0YdyXr7V3mbo26Up@fEBV
+zZgTflJgTOxWJ0}I&%kku?$XC$mHA^KTJ|RYC<ccWT{sn5+=gc_vy(jCJ;Yz2I`IOY
+zPZ3@EA)VxQtDDa?YfxnvIBd{e`p_%w#L91ybTg8LjqAETuKd!zCb@juf?=E(9%j^5
+z-k`Hg#kM&&Hcd488F#&Th<a@C-4W(#Q-3sLOJX|Cox67P<1{a{tN)sRrP+L+wUb1z
+zdVb=$`yZFca-a<NzaWpNu}x!@KaVf^s@!}TtF%4xm0QbIk9locWLl2QWOZ2VHJDT4
+zT3)JGQ`aH3|JCnk=!=-*M{aH1g>04P^M-ghy7PD6!hVQlhtzu?000000000000008
+ZegRE#8fYB^q4WR%002ovPDHLkV1h-=F0%jt
+
+literal 0
+HcmV?d00001
+
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 25752a9..17cdd6d 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -1,5 +1,5 @@
+ <resources>
+-    <string name="app_name">BaitBoatPhoneApp</string>
++    <string name="app_name">Kontroler Łódki</string>
+ 
+     <string-array name="dropDownMenuOptions">
+         <item>Więcej</item>
+diff --git a/app/src/main/res/xml/preferences.xml b/app/src/main/res/xml/preferences.xml
+index 612fffa..8c5ac9d 100644
+--- a/app/src/main/res/xml/preferences.xml
++++ b/app/src/main/res/xml/preferences.xml
+@@ -21,5 +21,18 @@
+         android:title="Maksymalna moc łódki (%)"
+         android:summary="Pozwala ograniczyć moc łódki i oszczędzać baterię. Dotyczy tylko sterowania manualnego. Maksimum to 100%"/>
+ 
++    <SeekBarPreference
++        android:defaultValue="0"
++        app:min="-20"
++        android:max="20"
++        app:showSeekBarValue="true"
++        android:key="boat_motor_compensation"
++        android:selectAllOnFocus="true"
++        android:singleLine="true"
++        android:title="Kompensacja nierównej mocy silników (%)"
++        android:summary="Zmienia proporcje sterowania silnikami, gdy łódka ściąga podczas jazdy prosto. Jeśli łódka skręca w lewo, ustaw większe od zera, jeśli w prawo, ustaw mniejsze."/>
++
++
++
+ 
+ </PreferenceScreen>
+\ No newline at end of file
+-- 
+2.39.1.windows.1
+
